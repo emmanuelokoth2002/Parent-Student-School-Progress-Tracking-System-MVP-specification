@@ -15,10 +15,12 @@ def add_student():
 
     if not studentid or not firstname or not lastname or not birthdate or not classid:
         raise BadRequest('All fields (studentid, firstname, lastname, birthdate, classid) are required.')
+    database = Database()
 
     # Call stored procedure to add a student
-    query = f"CALL `parent-student  Tracking`.`registerstudent`(<{studentid int}>, <{firstname varchar(45)}>, <{lastname varchar(45)}>, <{birthdate datetime}>, <{classid int}>);"
-    Database.execute_query(query)
+    query = "CALL `parent-student Tracking`.`registerstudent`(%s, %s, %s, %s, %s);"
+    args = (studentid, firstname, lastname, birthdate, classid)
+    database.execute_query(query,args)
 
     return jsonify({'message': 'Student added successfully'}), 201
 
@@ -26,7 +28,10 @@ def add_student():
 def get_students():
     # Call stored procedure to get all students
     query = "CALL `parent-student  Tracking`.`students`();"
-    students = Database.get_data(query)
+    database = Database()
+    students =database.get_data(query)
+
+    print("Retrieved students:", students)
 
     student_list = [{'studentid': student['studentid'], 'firstname': student['firstname'], 'lastname': student['lastname'], 'birthdate': student['birthdate'], 'classid': student['classid']} for student in students]
     return jsonify(student_list), 200
@@ -34,7 +39,8 @@ def get_students():
 @students_bp.route('/delete_student/<int:studentid>', methods=['POST'])
 def delete_student(studentid):
     # Call stored procedure to delete a student
-    query = f"CALL `parent-student  Tracking`.`deletestudent`(<{studentid int}>);"
-    Database.execute_query(query)
+    query = f"CALL `parent-student  Tracking`.`deletestudent`(%s);"
+    args = (studentid)
+    Database.execute_query(query,args)
 
     return jsonify({'message': 'Student deleted successfully'}), 200

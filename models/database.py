@@ -21,12 +21,25 @@ class Database:
         except mysql.connector.Error as e:
             print("Connection failed:", e)
 
-    def get_data(self, query):
+    def execute_query(self, query, args=None):
+        self.connect()
+        cursor = self.conn.cursor()
+        if args is not None:
+            cursor.execute(query, args)
+        else:
+            cursor.execute(query)
+        self.conn.commit()
+        cursor.close()
+
+    def get_data(self, query, args=None):
         self.connect()
         cursor = self.conn.cursor(dictionary=True)
-        cursor.execute(query)
-        result = cursor.fetchall()
+        cursor.execute(query, multi=True)  # Use multi=True here
+        result = []
+        for result_cursor in cursor:
+            result.extend(result_cursor.fetchall())
         cursor.close()
+        self.conn.close()  # Close the connection after use
         return result
 
     def get_json(self, query):
