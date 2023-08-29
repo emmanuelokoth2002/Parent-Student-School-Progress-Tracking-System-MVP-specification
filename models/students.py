@@ -1,8 +1,11 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.exceptions import BadRequest
 from database import Database
+import mysql.connector
+import json
 
 students_bp = Blueprint('students', __name__)
+
 
 @students_bp.route('/add_student', methods=['POST'])
 def add_student():
@@ -14,33 +17,70 @@ def add_student():
     classid = data.get('classid')
 
     if not studentid or not firstname or not lastname or not birthdate or not classid:
-        raise BadRequest('All fields (studentid, firstname, lastname, birthdate, classid) are required.')
-    database = Database()
+        return jsonify({'error': 'All fields (studentid, firstname, lastname, birthdate, classid) are required'}), 400
 
-    # Call stored procedure to add a student
-    query = "CALL `parent-student Tracking`.`registerstudent`(%s, %s, %s, %s, %s);"
-    args = (studentid, firstname, lastname, birthdate, classid)
-    database.execute_query(query,args)
+    try:
+        db = Database()
+        
+        # Call stored procedure to add a student
+        query = "CALL `parent-student  Tracking`.`registerstudent`(%s, %s, %s, %s, %s);"
+        args = (studentid, firstname, lastname, birthdate, classid)
+        db.execute_query(query, args, multi=True)  # Set multi to False for single query
 
-    return jsonify({'message': 'Student added successfully'}), 201
+        print("Student added successfully")
+
+        return jsonify({'message': 'Student added successfully'}), 201
+
+    except Exception as e:
+        print("Error:", e)
+        # Log the error or return a proper error response
+        return jsonify({'error': 'An error occurred'}), 500
+
 
 @students_bp.route('/get_students', methods=['GET'])
 def get_students():
-    # Call stored procedure to get all students
-    query = "CALL `parent-student  Tracking`.`students`();"
-    database = Database()
-    students =database.get_data(query)
+    try:
+        # Create a database connection
+        db = Database()
 
-    print("Retrieved students:", students)
+        # Call stored procedure to get all students
+        query = "CALL `parent-student  Tracking`.`students`();"
 
-    student_list = [{'studentid': student['studentid'], 'firstname': student['firstname'], 'lastname': student['lastname'], 'birthdate': student['birthdate'], 'classid': student['classid']} for student in students]
-    return jsonify(student_list), 200
+        students = db.get_data(query, multi=True)
+
+        print("Retrieved students:", students)
+
+        # Create a list of dictionaries containing student information
+        student_list = []
+        for student in students:
+            student_info = {
+                'studentid': student['studentid'],
+                'firstname': student['firstname'],
+                'lastname': student['lastname'],
+                'birthdate': student['birthdate'],
+                'classid': student['classid'],
+                'createdat': student['createdat'],
+                'updatedat': student['updatedat']
+            }
+            student_list.append(student_info)
+
+        # Return the list of student information as JSON response
+        return jsonify(student_list), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'error': 'An error occurred'}), 500
+
+    except mysql.connector.Error as e:
+        print("MySQL error:", e)
+        return jsonify({'error': 'A MySQL error occurred'}), 500
 
 @students_bp.route('/delete_student/<int:studentid>', methods=['POST'])
 def delete_student(studentid):
     # Call stored procedure to delete a student
     query = f"CALL `parent-student  Tracking`.`deletestudent`(%s);"
-    args = (studentid)
-    Database.execute_query(query,args)
+    args = (studentid,)
+    db = Database()
+    db.execute_query(query,args)
 
     return jsonify({'message': 'Student deleted successfully'}), 200
