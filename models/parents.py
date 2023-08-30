@@ -27,11 +27,48 @@ def add_parent():
 
 @parents_bp.route('/get_parents', methods=['GET'])
 def get_parents():
-    # Call stored procedure to get all parents
-    query = "CALL `parent-student  Tracking`.`parents`();"
+    try:
+        # Create a database connection
+        db = Database()
+
+        # Call stored procedure to get all parents
+        query = "CALL `parent-student  Tracking`.`parents`();"
+
+        parents = db.get_data(query, multi=True)
+
+        print("Retrieved parents:", parents)
+
+        # Create a list of dictionaries containing parent information
+        parent_list = []
+        for parent in parents:
+            parent_info = {
+                'parentid': parent['parentid'],
+                'firstname': parent['firstname'],
+                'lastname': parent['lastname'],
+                'email': parent['email'],
+                'phonenumber': parent['phonenumber'],
+                'createdat': parent['createdat'],
+                'updatedat': parent['updatedat']
+            }
+            parent_list.append(parent_info)
+
+        # Return the list of parent information as JSON response
+        return jsonify(parent_list), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'error': 'An error occurred'}), 500
+
+    except mysql.connector.Error as e:
+        print("MySQL error:", e)
+        return jsonify({'error': 'A MySQL error occurred'}), 500
+
+@parents_bp.route('/delete_parent/<int:parentid>', methods=['POST'])
+def delete_parent(parentid):
+    # Call stored procedure to delete a parent
+    query = f"CALL `parent-student  Tracking`.`deleteparent`(%s);"
+    args = (parentid,)
     db = Database()
+    db.execute_query(query,args)
 
-    parents = db.get_data(query)
-
-    parent_list = [{'parentid': parent['parentid'], 'firstname': parent['firstname'], 'lastname': parent['lastname'], 'email': parent['email']} for parent in parents]
-    return jsonify(parent_list), 200
+    return jsonify({'message': 'Parent deleted successfully'}), 200

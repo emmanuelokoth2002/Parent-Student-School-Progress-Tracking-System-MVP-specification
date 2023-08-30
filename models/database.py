@@ -21,7 +21,7 @@ class Database:
         except mysql.connector.Error as e:
             print("Connection failed:", e)
 
-    def execute_query(self, query, args=None, multi=False):
+    def execute_query(self, query, args=None, multi=True):
         self.connect()
         cursor = self.conn.cursor()
         try:
@@ -47,7 +47,7 @@ class Database:
             cursor.close()
 
 
-    def get_data(self, query, args=None, multi=False):
+    def get_data(self, query, args=None, multi=True):
         self.connect()
         cursor = self.conn.cursor(dictionary=True, buffered=True)
         
