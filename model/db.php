@@ -1,9 +1,5 @@
 <?php 
     session_start();
-    # remove after implementing login
-    if(!isset($_SESSION['userid'])){
-        $_SESSION['userid']=1;
-    }
 
     $sql='';
 
@@ -19,7 +15,7 @@
             $this->username="root";
             $this->password="";
             $this->charset="utf8mb4";
-            $this->dbname='contacts'; 
+            $this->dbname='parentstudentsystem'; 
            
             try{
                 // check if user is logged in otherwise redirect to the login page
