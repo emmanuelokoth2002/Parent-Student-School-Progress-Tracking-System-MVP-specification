@@ -17,4 +17,14 @@
         echo $user -> saveuser($userid,$username,$password,$email,$firstname,$lastname,$role);
     }
 
+    if(isset($_POST['deleteuser'])){
+        $userid = $_POST['userid'];
+        echo $user -> deleteuser($userid);
+    }
+
+    if(isset($_POST['checkuser'])){
+        $userid = $_POST['userid'];
+        echo $user -> checkuser($userid);
+    }
+
 ?>
