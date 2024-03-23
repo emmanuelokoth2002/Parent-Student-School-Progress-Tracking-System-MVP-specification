@@ -25,7 +25,7 @@
         public function deleteuser($userid){
             $sql = "CALL `sp_deleteuser`({$userid})";
             $this->getJSON($sql);
-            return "User successfully deeted";
+            return "User successfully deleted";
     }
 }
 ?>
